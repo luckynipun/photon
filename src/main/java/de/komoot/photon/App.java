@@ -156,6 +156,13 @@ public class App {
         get("reverse", new ReverseSearchRequestHandler("reverse", esNodeClient, args.getLanguages()));
         get("reverse/", new ReverseSearchRequestHandler("reverse/", esNodeClient, args.getLanguages()));
 
+        // setup bulk search APIs
+        get("bulk-geo", new BulkSearchRequestHandler("bulk-geo", esNodeClient, args.getLanguages()));
+        get("bulk-geo/", new BulkSearchRequestHandler("bulk-geo/", esNodeClient, args.getLanguages()));
+        get("bulk-reverse", new BulkReverseSearchRequestHandler("bulk-reverse", esNodeClient, args.getLanguages()));
+        get("bulk-reverse/", new BulkReverseSearchRequestHandler("bulk-reverse/", esNodeClient, args.getLanguages()));
+
+
         // setup update API
         final NominatimUpdater nominatimUpdater = new NominatimUpdater(args.getHost(), args.getPort(), args.getDatabase(), args.getUser(), args.getPassword());
         Updater updater = new de.komoot.photon.elasticsearch.Updater(esNodeClient, args.getLanguages());

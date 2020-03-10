@@ -6,9 +6,7 @@ import com.vividsolutions.jts.geom.Point;
 import spark.QueryParamsMap;
 import spark.Request;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * A factory that creates a {@link PhotonRequest} from a {@link Request web request}
@@ -21,6 +19,9 @@ public class PhotonRequestFactory {
 
     protected static HashSet<String> m_hsRequestQueryParams = new HashSet<>(Arrays.asList("lang", "q", "lon", "lat",
             "limit", "osm_tag", "location_bias_scale", "bbox", "debug"));
+    protected static HashSet<String> m_hsBulkRequestQueryParams = new HashSet<>(Arrays.asList("lang", "qlist", "lon", "lat",
+            "limit", "osm_tag", "location_bias_scale", "bbox", "debug"));
+
     public PhotonRequestFactory(Set<String> supportedLanguages) {
         this.languageChecker = new LanguageChecker(supportedLanguages);
         this.bboxParamConverter = new BoundingBoxParamConverter();
@@ -28,36 +29,19 @@ public class PhotonRequestFactory {
 
     public <R extends PhotonRequest> R create(Request webRequest) throws BadRequestException {
 
+        checkAllowedParameters(webRequest);
 
-        for (String queryParam : webRequest.queryParams())
-            if (!m_hsRequestQueryParams.contains(queryParam))
-                throw new BadRequestException(400, "unknown query parameter '" + queryParam + "'.  Allowed parameters are: " + m_hsRequestQueryParams);
+        String language = checkLanguage(webRequest);
 
-
-        String language = webRequest.queryParams("lang");
-        language = language == null ? "en" : language;
-        languageChecker.apply(language);
         String query = webRequest.queryParams("q");
         if (query == null) throw new BadRequestException(400, "missing search term 'q': /?q=berlin");
-        Integer limit;
-        try {
-            limit = Integer.valueOf(webRequest.queryParams("limit"));
-        } catch (NumberFormatException e) {
-            limit = 15;
-        }
+
+        Integer limit = checkLimit(webRequest);
 
         Point locationForBias = optionalLocationParamConverter.apply(webRequest);
         Envelope bbox = bboxParamConverter.apply(webRequest);
 
-        // don't use too high default value, see #306
-        double scale = 1.6;
-        String scaleStr = webRequest.queryParams("location_bias_scale");
-        if (scaleStr != null && !scaleStr.isEmpty())
-            try {
-                scale = Double.parseDouble(scaleStr);
-            } catch (Exception nfe) {
-                throw new BadRequestException(400, "invalid parameter 'location_bias_scale' must be a number");
-            }
+        double scale = checkScale(webRequest);
 
         QueryParamsMap tagFiltersQueryMap = webRequest.queryMap("osm_tag");
         if (!new CheckIfFilteredRequest().execute(tagFiltersQueryMap)) {
@@ -67,8 +51,83 @@ public class PhotonRequestFactory {
         String[] tagFilters = tagFiltersQueryMap.values();
         setUpTagFilters(photonRequest, tagFilters);
 
-
         return (R) photonRequest;
+    }
+
+    public <R extends PhotonRequest> List<R> createBulk(Request webRequest) throws BadRequestException {
+        List<R> results = new ArrayList<>();
+
+        checkAllowedParameters(webRequest);
+
+        String language = checkLanguage(webRequest);
+
+        String queriesParam = webRequest.queryParams("q");
+        if (queriesParam == null) throw new BadRequestException(400, "missing search term 'q': /?q=berlin");
+
+        /**
+         * Below line of code is crucial for bulk GeoCoding API, The addresses are split by underscore("_")
+         * Hence the individual address cannot contain underscore("_")
+         * */
+        List<String> queries = Arrays.asList(queriesParam.split("_"));
+
+        Integer limit = checkLimit(webRequest);
+
+        Point locationForBias = optionalLocationParamConverter.apply(webRequest);
+        Envelope bbox = bboxParamConverter.apply(webRequest);
+
+        double scale = checkScale(webRequest);
+
+        QueryParamsMap tagFiltersQueryMap = webRequest.queryMap("osm_tag");
+        if (!new CheckIfFilteredRequest().execute(tagFiltersQueryMap)) {
+            for (String query : queries)
+                results.add((R) new PhotonRequest(query, limit, bbox, locationForBias, scale, language));
+            return results;
+        }
+
+        for (String query : queries) {
+            FilteredPhotonRequest photonRequest = new FilteredPhotonRequest(query, limit, bbox, locationForBias, scale, language);
+            String[] tagFilters = tagFiltersQueryMap.values();
+            setUpTagFilters(photonRequest, tagFilters);
+            results.add((R) photonRequest);
+        }
+
+        return results;
+    }
+
+    private Integer checkLimit(Request webRequest) {
+        Integer limit;
+        try {
+            limit = Integer.valueOf(webRequest.queryParams("limit"));
+        } catch (NumberFormatException e) {
+            limit = 15;
+        }
+        return limit;
+    }
+
+    private double checkScale(Request webRequest) throws BadRequestException {
+        // don't use too high default value, see #306
+        double scale = 1.6;
+        String scaleStr = webRequest.queryParams("location_bias_scale");
+        if (scaleStr != null && !scaleStr.isEmpty())
+            try {
+                scale = Double.parseDouble(scaleStr);
+            } catch (Exception nfe) {
+                throw new BadRequestException(400, "invalid parameter 'location_bias_scale' must be a number");
+            }
+        return scale;
+    }
+
+    private String checkLanguage(Request webRequest) throws BadRequestException {
+        String language = webRequest.queryParams("lang");
+        language = language == null ? "en" : language;
+        languageChecker.apply(language);
+        return language;
+    }
+
+    private void checkAllowedParameters(Request webRequest) throws BadRequestException {
+        for (String queryParam : webRequest.queryParams())
+            if (!m_hsRequestQueryParams.contains(queryParam))
+                throw new BadRequestException(400, "unknown query parameter '" + queryParam + "'.  Allowed parameters are: " + m_hsRequestQueryParams);
     }
 
     private void setUpTagFilters(FilteredPhotonRequest request, String[] tagFilters) {
