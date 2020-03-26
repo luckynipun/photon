@@ -42,7 +42,7 @@ public class PhotonRequestFactory {
         Integer limit = checkLimit(request);
 
         Point locationForBias = request.getLocationForBias();
-        optionalLocationParamConverter.checkLatLonLimits(locationForBias.getCoordinate());
+        optionalLocationParamConverter.checkLatLonLimits(locationForBias);
 
         Envelope bbox = request.getBbox();
         bboxParamConverter.checkBbox(bbox);
@@ -103,7 +103,7 @@ public class PhotonRequestFactory {
         Integer limit = checkLimit(request);
 
         Point locationForBias = request.getLocationForBias();
-        optionalLocationParamConverter.checkLatLonLimits(locationForBias.getCoordinate());
+        optionalLocationParamConverter.checkLatLonLimits(locationForBias);
 
         Envelope bbox = request.getBbox();
         bboxParamConverter.checkBbox(bbox);

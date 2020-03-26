@@ -29,7 +29,7 @@ public class ReverseRequestFactory {
         String language = checkLanguage(request);
 
         Point location = request.getLocation();
-        mandatoryLocationParamConverter.checkLatLonLimits(location.getCoordinate());
+        mandatoryLocationParamConverter.checkLatLonLimits(location);
 
         Double radius = checkRadius(request);
 
@@ -72,7 +72,7 @@ public class ReverseRequestFactory {
 
 
         for (Point location: request.getLocations())
-            mandatoryLocationParamConverter.checkLatLonLimits(location.getCoordinate());
+            mandatoryLocationParamConverter.checkLatLonLimits(location);
 
         Double radius = checkRadius(request);
 
