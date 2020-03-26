@@ -2,9 +2,7 @@ package de.komoot.photon.query;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.vividsolutions.jts.geom.Coordinate;
-import com.vividsolutions.jts.geom.Envelope;
-import com.vividsolutions.jts.geom.Point;
+import com.vividsolutions.jts.geom.*;
 import spark.QueryParamsMap;
 import spark.Request;
 
@@ -41,18 +39,23 @@ public class PhotonRequestFactory {
 
         Integer limit = checkLimit(request);
 
-        Point locationForBias = request.getLocationForBias();
-        optionalLocationParamConverter.checkLatLonLimits(locationForBias);
+        Coordinate coordinateForBias = request.getCoordinateForBias();
+        Point locationForBias = null;
+        if (coordinateForBias != null) {
+            GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
+            locationForBias = geometryFactory.createPoint(coordinateForBias);
+        }
 
         Envelope bbox = request.getBbox();
-        bboxParamConverter.checkBbox(bbox);
+        if (bbox != null)
+            bboxParamConverter.checkBbox(bbox);
 
         double scale = checkScale(request);
 
         //osm_tag should always be in Params
         QueryParamsMap tagFiltersQueryMap = webRequest.queryMap("osm_tag");
         if (!new CheckIfFilteredRequest().execute(tagFiltersQueryMap)) {
-            return (R) new PhotonRequest(query, limit, bbox, locationForBias, scale, language);
+            return (R) new PhotonRequest(query, limit, bbox, locationForBias, coordinateForBias, scale, language);
         }
         FilteredPhotonRequest photonRequest = new FilteredPhotonRequest(query, limit, bbox, locationForBias, scale, language);
         String[] tagFilters = tagFiltersQueryMap.values();
@@ -79,7 +82,7 @@ public class PhotonRequestFactory {
 
         QueryParamsMap tagFiltersQueryMap = webRequest.queryMap("osm_tag");
         if (!new CheckIfFilteredRequest().execute(tagFiltersQueryMap)) {
-            return (R) new PhotonRequest(query, limit, bbox, locationForBias, scale, language);
+            return (R) new PhotonRequest(query, limit, bbox, locationForBias, null, scale, language);
         }
         FilteredPhotonRequest photonRequest = new FilteredPhotonRequest(query, limit, bbox, locationForBias, scale, language);
         String[] tagFilters = tagFiltersQueryMap.values();
@@ -102,11 +105,16 @@ public class PhotonRequestFactory {
 
         Integer limit = checkLimit(request);
 
-        Point locationForBias = request.getLocationForBias();
-        optionalLocationParamConverter.checkLatLonLimits(locationForBias);
+        Coordinate coordinateForBias = request.getCoordinateForBias();
+        Point locationForBias = null;
+        if (coordinateForBias != null) {
+            GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
+            locationForBias = geometryFactory.createPoint(coordinateForBias);
+        }
 
         Envelope bbox = request.getBbox();
-        bboxParamConverter.checkBbox(bbox);
+        if (bbox != null)
+            bboxParamConverter.checkBbox(bbox);
 
         double scale = checkScale(request);
 
@@ -114,7 +122,7 @@ public class PhotonRequestFactory {
         QueryParamsMap tagFiltersQueryMap = webRequest.queryMap("osm_tag");
         if (!new CheckIfFilteredRequest().execute(tagFiltersQueryMap)) {
             for (String query : queries)
-                results.add((R) new PhotonRequest(query, limit, bbox, locationForBias, scale, language));
+                results.add((R) new PhotonRequest(query, limit, bbox, locationForBias, coordinateForBias, scale, language));
             return results;
         }
 
@@ -154,7 +162,7 @@ public class PhotonRequestFactory {
         QueryParamsMap tagFiltersQueryMap = webRequest.queryMap("osm_tag");
         if (!new CheckIfFilteredRequest().execute(tagFiltersQueryMap)) {
             for (String query : queries)
-                results.add((R) new PhotonRequest(query, limit, bbox, locationForBias, scale, language));
+                results.add((R) new PhotonRequest(query, limit, bbox, locationForBias, null, scale, language));
             return results;
         }
 
@@ -181,7 +189,7 @@ public class PhotonRequestFactory {
 
     //This method is for Request Body
     private Integer checkLimit(PhotonRequest request) {
-        return request.getLimit() == 0 ? 15 : request.getLimit();
+        return ((request.getLimit() == null) || (request.getLimit() == 0)) ? 15 : request.getLimit();
     }
 
     //This method is for Query Params

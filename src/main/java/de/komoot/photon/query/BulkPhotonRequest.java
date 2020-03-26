@@ -1,5 +1,6 @@
 package de.komoot.photon.query;
 
+import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.Point;
 
@@ -13,8 +14,8 @@ public class BulkPhotonRequest extends PhotonRequest implements Serializable {
 
     private List<String> queries;
 
-    public BulkPhotonRequest(String query, int limit, Envelope bbox, Point locationForBias, double scale, String language, List<String> queries) {
-        super(query, limit, bbox, locationForBias, scale, language);
+    public BulkPhotonRequest(String query, int limit, Envelope bbox, Point locationForBias, Coordinate coordinateForBias, double scale, String language, List<String> queries) {
+        super(query, limit, bbox, locationForBias, coordinateForBias, scale, language);
         this.queries = queries;
     }
 

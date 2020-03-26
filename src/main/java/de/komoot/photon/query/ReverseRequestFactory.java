@@ -2,7 +2,10 @@ package de.komoot.photon.query;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.vividsolutions.jts.geom.Coordinate;
+import com.vividsolutions.jts.geom.GeometryFactory;
 import com.vividsolutions.jts.geom.Point;
+import com.vividsolutions.jts.geom.PrecisionModel;
 import spark.Request;
 
 import java.util.*;
@@ -28,8 +31,13 @@ public class ReverseRequestFactory {
 
         String language = checkLanguage(request);
 
-        Point location = request.getLocation();
-        mandatoryLocationParamConverter.checkLatLonLimits(location);
+        Coordinate coordinate = request.getCoordinate();
+        Point location;
+        if (coordinate != null) {
+            GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
+            location = geometryFactory.createPoint(coordinate);
+            mandatoryLocationParamConverter.checkLatLonLimits(location);
+        } else throw new BadRequestException(400, "missing param 'coordinate'");
 
         Double radius = checkRadius(request);
 
@@ -39,7 +47,7 @@ public class ReverseRequestFactory {
 
         String queryStringFilter = request.getQueryStringFilter();
 
-        ReverseRequest reverseRequest = new ReverseRequest(location, language, radius, queryStringFilter, limit, locationDistanceSort);
+        ReverseRequest reverseRequest = new ReverseRequest(location, request.getCoordinate(), language, radius, queryStringFilter, limit, locationDistanceSort);
         return (R) reverseRequest;
 
     }
@@ -59,7 +67,7 @@ public class ReverseRequestFactory {
 
         String queryStringFilter = webRequest.queryParams("query_string_filter");
 
-        ReverseRequest reverseRequest = new ReverseRequest(location, language, radius, queryStringFilter, limit, locationDistanceSort);
+        ReverseRequest reverseRequest = new ReverseRequest(location, null, language, radius, queryStringFilter, limit, locationDistanceSort);
         return (R) reverseRequest;
     }
 
@@ -70,9 +78,18 @@ public class ReverseRequestFactory {
 
         String language = checkLanguage(request);
 
+        List<Coordinate> coordinates = request.getCoordinates();
+        List<Point> locations = new ArrayList<>();
+        if (coordinates != null) {
+            for (Coordinate coordinate: request.getCoordinates()) {
+                GeometryFactory geometryFactory = new GeometryFactory(new PrecisionModel(), 4326);
+                Point point = geometryFactory.createPoint(coordinate);
+                mandatoryLocationParamConverter.checkLatLonLimits(point);
+                locations.add(point);
+            }
+        } else throw new BadRequestException(400, "missing param 'coordinates'");
 
-        for (Point location: request.getLocations())
-            mandatoryLocationParamConverter.checkLatLonLimits(location);
+
 
         Double radius = checkRadius(request);
 
@@ -84,8 +101,8 @@ public class ReverseRequestFactory {
 
         List<R> result = new ArrayList<>();
 
-        for (Point location : request.getLocations()) {
-            ReverseRequest reverseRequest = new ReverseRequest(location, language, radius, queryStringFilter, limit, locationDistanceSort);
+        for (Point location : locations) {
+            ReverseRequest reverseRequest = new ReverseRequest(location, null, language, radius, queryStringFilter, limit, locationDistanceSort);
             result.add((R) reverseRequest);
         }
 
@@ -110,7 +127,7 @@ public class ReverseRequestFactory {
         List<R> result = new ArrayList<>();
 
         for (Point location : locations) {
-            ReverseRequest reverseRequest = new ReverseRequest(location, language, radius, queryStringFilter, limit, locationDistanceSort);
+            ReverseRequest reverseRequest = new ReverseRequest(location, null, language, radius, queryStringFilter, limit, locationDistanceSort);
             result.add((R) reverseRequest);
         }
 

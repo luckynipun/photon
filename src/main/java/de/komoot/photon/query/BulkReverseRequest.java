@@ -1,5 +1,6 @@
 package de.komoot.photon.query;
 
+import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Point;
 
 import java.io.Serializable;
@@ -10,18 +11,18 @@ import java.util.List;
  */
 public class BulkReverseRequest extends ReverseRequest implements Serializable {
 
-    private List<Point> locations;
+    private List<Coordinate> coordinates;
 
-    public BulkReverseRequest(Point location, String language, Double radius, String queryStringFilter, Integer limit, Boolean locationDistanceSort, List<Point> locations) {
-        super(location, language, radius, queryStringFilter, limit, locationDistanceSort);
-        this.locations = locations;
+    public BulkReverseRequest(Point location, Coordinate coordinate, String language, Double radius, String queryStringFilter, Integer limit, Boolean locationDistanceSort, List<Coordinate> coordinates) {
+        super(location, coordinate, language, radius, queryStringFilter, limit, locationDistanceSort);
+        this.coordinates = coordinates;
     }
 
-    public List<Point> getLocations() {
-        return locations;
+    public List<Coordinate> getCoordinates() {
+        return coordinates;
     }
 
-    public void setLocations(List<Point> locations) {
-        this.locations = locations;
+    public void setCoordinates(List<Coordinate> coordinates) {
+        this.coordinates = coordinates;
     }
 }
