@@ -22,7 +22,7 @@ public class FilteredPhotonRequest extends PhotonRequest {
     private Map<String, Set<String>> excludeTagValues = new HashMap<String, Set<String>>(3);
 
     FilteredPhotonRequest(String query, int limit, Envelope bbox, Point locationForBias, double locBiasScale, String language) {
-        super(query, limit, bbox, locationForBias, locBiasScale, language);
+        super(query, limit, bbox, locationForBias, null, locBiasScale, language);
     }
 
     public Set<String> keys() {
