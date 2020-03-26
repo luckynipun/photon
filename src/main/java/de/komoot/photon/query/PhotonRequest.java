@@ -29,23 +29,47 @@ public class PhotonRequest implements Serializable {
         return query;
     }
 
+    public void setQuery(String query) {
+        this.query = query;
+    }
+
     public Integer getLimit() {
         return limit;
     }
-    
-    public Envelope getBbox() {
-        return bbox;
+
+    public void setLimit(Integer limit) {
+        this.limit = limit;
     }
 
     public Point getLocationForBias() {
         return locationForBias;
     }
 
-    public double getScaleForBias() {
-        return scale;
+    public void setLocationForBias(Point locationForBias) {
+        this.locationForBias = locationForBias;
     }
 
     public String getLanguage() {
         return language;
+    }
+
+    public void setLanguage(String language) {
+        this.language = language;
+    }
+
+    public double getScale() {
+        return scale;
+    }
+
+    public Envelope getBbox() {
+        return bbox;
+    }
+
+    public void setBbox(Envelope bbox) {
+        this.bbox = bbox;
+    }
+
+    public double getScaleForBias() {
+        return scale;
     }
 }

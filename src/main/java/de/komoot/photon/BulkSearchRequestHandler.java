@@ -42,7 +42,7 @@ public class BulkSearchRequestHandler<R extends PhotonRequest> extends RouteImpl
 
         List<R> photonRequests = null;
         try {
-            photonRequests = photonRequestFactory.createBulk(request);
+            photonRequests = photonRequestFactory.createBulkWithBody(request);
         } catch (BadRequestException e) {
             JSONObject json = new JSONObject();
             json.put("message", e.getMessage());

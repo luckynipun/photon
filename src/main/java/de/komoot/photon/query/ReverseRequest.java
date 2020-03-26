@@ -28,23 +28,47 @@ public class ReverseRequest implements Serializable {
         return location;
     }
 
+    public void setLocation(Point location) {
+        this.location = location;
+    }
+
     public String getLanguage() {
         return language;
+    }
+
+    public void setLanguage(String language) {
+        this.language = language;
     }
 
     public Double getRadius() {
         return radius;
     }
 
+    public void setRadius(Double radius) {
+        this.radius = radius;
+    }
+
     public Integer getLimit() {
         return limit;
+    }
+
+    public void setLimit(Integer limit) {
+        this.limit = limit;
     }
 
     public String getQueryStringFilter() {
         return queryStringFilter;
     }
 
+    public void setQueryStringFilter(String queryStringFilter) {
+        this.queryStringFilter = queryStringFilter;
+    }
+
     public Boolean getLocationDistanceSort() {
         return locationDistanceSort;
+    }
+
+    public void setLocationDistanceSort(Boolean locationDistanceSort) {
+        this.locationDistanceSort = locationDistanceSort;
     }
 }

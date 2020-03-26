@@ -1,5 +1,7 @@
 package de.komoot.photon.query;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.vividsolutions.jts.geom.Coordinate;
 import com.vividsolutions.jts.geom.Envelope;
 import com.vividsolutions.jts.geom.Point;
@@ -27,6 +29,38 @@ public class PhotonRequestFactory {
         this.bboxParamConverter = new BoundingBoxParamConverter();
     }
 
+    public <R extends PhotonRequest> R createWithBody(Request webRequest) throws BadRequestException {
+        String body = webRequest.body();
+        Gson gson = new GsonBuilder().create();
+        PhotonRequest request = gson.fromJson(body, PhotonRequest.class);
+
+        String language = checkLanguage(request);
+
+        String query = request.getQuery();
+        if (query == null) throw new BadRequestException(400, "missing param 'query'");
+
+        Integer limit = checkLimit(request);
+
+        Point locationForBias = request.getLocationForBias();
+        optionalLocationParamConverter.checkLatLonLimits(locationForBias.getCoordinate());
+
+        Envelope bbox = request.getBbox();
+        bboxParamConverter.checkBbox(bbox);
+
+        double scale = checkScale(request);
+
+        //osm_tag should always be in Params
+        QueryParamsMap tagFiltersQueryMap = webRequest.queryMap("osm_tag");
+        if (!new CheckIfFilteredRequest().execute(tagFiltersQueryMap)) {
+            return (R) new PhotonRequest(query, limit, bbox, locationForBias, scale, language);
+        }
+        FilteredPhotonRequest photonRequest = new FilteredPhotonRequest(query, limit, bbox, locationForBias, scale, language);
+        String[] tagFilters = tagFiltersQueryMap.values();
+        setUpTagFilters(photonRequest, tagFilters);
+
+        return (R) photonRequest;
+    }
+
     public <R extends PhotonRequest> R create(Request webRequest) throws BadRequestException {
 
         checkAllowedParameters(webRequest);
@@ -52,6 +86,46 @@ public class PhotonRequestFactory {
         setUpTagFilters(photonRequest, tagFilters);
 
         return (R) photonRequest;
+    }
+
+    public <R extends PhotonRequest> List<R> createBulkWithBody(Request webRequest) throws BadRequestException {
+        String body = webRequest.body();
+        Gson gson = new GsonBuilder().create();
+        BulkPhotonRequest request = gson.fromJson(body, BulkPhotonRequest.class);
+
+        List<R> results = new ArrayList<>();
+
+        String language = checkLanguage(request);
+
+        List<String> queries = request.getQueries();
+        if (queries == null || queries.size() == 0) throw new BadRequestException(400, "missing queries");
+
+        Integer limit = checkLimit(request);
+
+        Point locationForBias = request.getLocationForBias();
+        optionalLocationParamConverter.checkLatLonLimits(locationForBias.getCoordinate());
+
+        Envelope bbox = request.getBbox();
+        bboxParamConverter.checkBbox(bbox);
+
+        double scale = checkScale(request);
+
+        //osm_tag should always be in Params
+        QueryParamsMap tagFiltersQueryMap = webRequest.queryMap("osm_tag");
+        if (!new CheckIfFilteredRequest().execute(tagFiltersQueryMap)) {
+            for (String query : queries)
+                results.add((R) new PhotonRequest(query, limit, bbox, locationForBias, scale, language));
+            return results;
+        }
+
+        for (String query : queries) {
+            FilteredPhotonRequest photonRequest = new FilteredPhotonRequest(query, limit, bbox, locationForBias, scale, language);
+            String[] tagFilters = tagFiltersQueryMap.values();
+            setUpTagFilters(photonRequest, tagFilters);
+            results.add((R) photonRequest);
+        }
+
+        return results;
     }
 
     public <R extends PhotonRequest> List<R> createBulk(Request webRequest) throws BadRequestException {
@@ -94,6 +168,7 @@ public class PhotonRequestFactory {
         return results;
     }
 
+    //This method is for Query Params
     private Integer checkLimit(Request webRequest) {
         Integer limit;
         try {
@@ -104,6 +179,12 @@ public class PhotonRequestFactory {
         return limit;
     }
 
+    //This method is for Request Body
+    private Integer checkLimit(PhotonRequest request) {
+        return request.getLimit() == 0 ? 15 : request.getLimit();
+    }
+
+    //This method is for Query Params
     private double checkScale(Request webRequest) throws BadRequestException {
         // don't use too high default value, see #306
         double scale = 1.6;
@@ -117,8 +198,23 @@ public class PhotonRequestFactory {
         return scale;
     }
 
+    //This method is for Request Body
+    private double checkScale(PhotonRequest request) throws BadRequestException {
+        // don't use too high default value, see #306
+        return request.getScale() == 0d ? 1.6 : request.getScale();
+    }
+
+    //This method is for Query Params
     private String checkLanguage(Request webRequest) throws BadRequestException {
         String language = webRequest.queryParams("lang");
+        language = language == null ? "en" : language;
+        languageChecker.apply(language);
+        return language;
+    }
+
+    //This method is for Request Body
+    private String checkLanguage(PhotonRequest request) throws BadRequestException {
+        String language = request.getLanguage();
         language = language == null ? "en" : language;
         languageChecker.apply(language);
         return language;

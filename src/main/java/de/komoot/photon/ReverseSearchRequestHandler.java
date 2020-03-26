@@ -40,7 +40,7 @@ public class ReverseSearchRequestHandler<R extends ReverseRequest> extends Route
     public String handle(Request request, Response response) {
         R photonRequest = null;
         try {
-            photonRequest = reverseRequestFactory.create(request);
+            photonRequest = reverseRequestFactory.createWithBody(request);
         } catch (BadRequestException e) {
             JSONObject json = new JSONObject();
             json.put("message", e.getMessage());

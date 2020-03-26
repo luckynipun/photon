@@ -9,6 +9,7 @@ import de.komoot.photon.nominatim.NominatimUpdater;
 import de.komoot.photon.utils.CorsFilter;
 import lombok.extern.slf4j.Slf4j;
 import org.elasticsearch.client.Client;
+import spark.Filter;
 import spark.Request;
 import spark.Response;
 
@@ -149,7 +150,14 @@ public class App {
                 response.type("application/json"); // in the other case set by enableCors
             });
         }
-        
+
+//        after((Filter) (request, response) -> {
+//            response.header("Access-Control-Allow-Methods", "GET,PUT,POST,DELETE,OPTIONS");
+//            response.header("Access-Control-Allow-Origin", "*");
+//            response.header("Access-Control-Allow-Headers", "Content-Type,Authorization,X-Requested-With,Content-Length,Accept,Origin,");
+//            response.header("Access-Control-Allow-Credentials", "true");
+//        });
+
         // setup search API
         get("api", new SearchRequestHandler("api", esNodeClient, args.getLanguages()));
         get("api/", new SearchRequestHandler("api/", esNodeClient, args.getLanguages()));

@@ -40,7 +40,7 @@ public class BulkReverseSearchRequestHandler<R extends ReverseRequest> extends R
 
         List<R> photonRequests = null;
         try {
-            photonRequests = reverseRequestFactory.createBulk(request);
+            photonRequests = reverseRequestFactory.createBulkWithBody(request);
         } catch (BadRequestException e) {
             JSONObject json = new JSONObject();
             json.put("message", e.getMessage());

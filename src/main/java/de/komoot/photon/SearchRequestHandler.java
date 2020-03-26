@@ -42,7 +42,7 @@ public class SearchRequestHandler<R extends PhotonRequest> extends RouteImpl {
     public String handle(Request request, Response response) {
         R photonRequest = null;
         try {
-            photonRequest = photonRequestFactory.create(request);
+            photonRequest = photonRequestFactory.createWithBody(request);
         } catch (BadRequestException e) {
             JSONObject json = new JSONObject();
             json.put("message", e.getMessage());

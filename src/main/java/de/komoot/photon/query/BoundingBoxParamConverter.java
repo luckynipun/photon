@@ -30,17 +30,26 @@ public class BoundingBoxParamConverter implements Function<Request, Envelope, Ba
             Double minLat = Double.valueOf(bboxCoords[1]);
             Double maxLon = Double.valueOf(bboxCoords[2]);
             Double maxLat = Double.valueOf(bboxCoords[3]);
-            if (minLon > 180.0 || minLon < -180.00 || maxLon > 180.0 || maxLon < -180.00) {
-                throw new BadRequestException(400, INVALID_BBOX_BOUNDS_MESSAGE);
-            }
-            if (minLat > 90.0 || minLat < -90.00 || maxLat > 90.0 || maxLat < -90.00) {
-                throw new BadRequestException(400, INVALID_BBOX_BOUNDS_MESSAGE);
-            }
-            bbox = new Envelope(minLon, maxLon, minLat, maxLat);
+            Envelope envelope = new Envelope(minLon, maxLon, minLat, maxLat);
+            checkBbox(envelope);
+            bbox = envelope;
         } catch (NumberFormatException nfe) {
             throw new BadRequestException(400, INVALID_BBOX_ERROR_MESSAGE);
         }
 
         return bbox;
+    }
+
+    public void checkBbox(Envelope bbox) throws BadRequestException {
+        double minLon = bbox.getMinY();
+        double minLat = bbox.getMinX();
+        double maxLon = bbox.getMaxY();
+        double maxLat = bbox.getMaxX();
+        if (minLon > 180.0 || minLon < -180.00 || maxLon > 180.0 || maxLon < -180.00) {
+            throw new BadRequestException(400, INVALID_BBOX_BOUNDS_MESSAGE);
+        }
+        if (minLat > 90.0 || minLat < -90.00 || maxLat > 90.0 || maxLat < -90.00) {
+            throw new BadRequestException(400, INVALID_BBOX_BOUNDS_MESSAGE);
+        }
     }
 }
