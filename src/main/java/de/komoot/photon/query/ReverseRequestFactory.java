@@ -41,7 +41,9 @@ public class ReverseRequestFactory {
 
         Double radius = checkRadius(request);
 
-        Boolean locationDistanceSort = request.getLocationDistanceSort();
+        Boolean locationDistanceSort = true;
+        if (request.getLocationDistanceSort() != null)
+            locationDistanceSort = request.getLocationDistanceSort();
 
         Integer limit = checkLimit(request);
 
@@ -93,7 +95,9 @@ public class ReverseRequestFactory {
 
         Double radius = checkRadius(request);
 
-        Boolean locationDistanceSort = request.getLocationDistanceSort();
+        Boolean locationDistanceSort = true;
+        if (request.getLocationDistanceSort() != null)
+            locationDistanceSort = request.getLocationDistanceSort();
 
         Integer limit = checkLimit(request);
 
@@ -183,7 +187,7 @@ public class ReverseRequestFactory {
 
     //This method is for Request Body
     private Integer checkLimit(ReverseRequest request) throws BadRequestException {
-        Integer limit = request.getLimit() == 0 ? 1 : request.getLimit();
+        Integer limit = ((request.getLimit() == null) || (request.getLimit() == 0)) ? 1 : request.getLimit();
         if (limit <= 0) {
             throw new BadRequestException(400, "invalid search term 'limit', expected a strictly positive integer.");
         } else {
@@ -215,7 +219,7 @@ public class ReverseRequestFactory {
 
     //This method is for Request Body
     private Double checkRadius(ReverseRequest request) throws BadRequestException {
-        Double radius = request.getRadius() == 0d ? 1d : request.getRadius();
+        Double radius = (request.getRadius() == null || request.getRadius() == 0d) ? 1d : request.getRadius();
         if (radius <= 0) {
             throw new BadRequestException(400, "invalid search term 'radius', expected a strictly positive number.");
         } else {
